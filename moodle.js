@@ -3,7 +3,6 @@ const cheerio = require('cheerio');
 
 let request = require('request');
 
-process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 request = request.defaults({jar: true});
 
 function getCourses(user, callback) {
@@ -39,7 +38,12 @@ function getCourses(user, callback) {
   });
 }
 
+function getTasks(user, callback) {
+
+}
+
 module.exports = {
   getCourses: getCourses
+  getTasks : getTasks
 
 };
