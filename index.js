@@ -2,8 +2,8 @@
 const moodle = require('./moodle');
 
 const eva = {
-  username: '20131197',
-  password: 'fwx3kacx9vec4*',
+  username: process.env.EVA_USER,
+  password: process.env.EVA_PASSWORD,
 
   url: 'http://eva.unapec.edu.do'
 
