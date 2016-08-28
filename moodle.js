@@ -6,23 +6,20 @@ let request = require('request');
 request = request.defaults({jar: true});
 
 function getCourses(user, callback) {
-  request.post({url: user.url + "/moodle/login/index.php",
+  request.post({url: `${user.url}/moodle/login/index.php `,
                               form: {username: user.username,password: user.password}},
                               (err, httpResponse, body) => {
     if (err) throw err;
 
-
-
-    request(user.url + '/moodle/', function (error, response, body) {
+    request(`${user.url}/moodle/`, function (error, response, body) {
       if (!error && response.statusCode == 200) {
 
         let $ = cheerio.load(body);
         let courses = [];
-
-          //The reason i dont use arrow here its because i want a Lexical This.
+          console.log(body);
         $('div.coursebox > .info > .coursename')
-          .each(function(iterator, e) {
-            courses.push( $(this).text()); //So i can do this shit. A lexical this. C:
+          .each(function() {
+            courses.push( $(this).text());
           });
 
         process.nextTick(() =>{
@@ -39,11 +36,36 @@ function getCourses(user, callback) {
 }
 
 function getTasks(user, callback) {
+  request.post({url: `${user.url}/moodle/login/index.php `,
+                form:{ username: user.username,password: user.password}},
+                              (err, httpResponse, body) => {
+    if (err) throw err;
 
+    request(`${user.url}/moodle/calendar/view.php?view=month&time=${Math.floor(Date.now() / 1000)}`, function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+
+        let $ = cheerio.load(body);
+        let courses = [];
+        $('li.calendar_event_course')
+          .each(function() {
+            courses.push($(this).text());
+          });
+
+        process.nextTick(() =>{
+           callback(null, courses);
+        });
+      } else {
+        process.nextTick(() => {
+           callback(new Error(error), null);
+        });
+        return;
+      }
+    });
+  });
 }
 
 module.exports = {
-  getCourses: getCourses
+  getCourses: getCourses,
   getTasks : getTasks
 
 };

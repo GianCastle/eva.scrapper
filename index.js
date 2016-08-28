@@ -2,17 +2,17 @@
 const moodle = require('./moodle');
 
 const eva = {
-  username: process.env.EVA_USER,
-  password: process.env.EVA_PASSWORD,
+  username: '20131197',
+  password: 'fwx3kacx9vec4*',
 
   url: 'http://eva.unapec.edu.do'
 
 };
 
-moodle.getCourses(eva, (err, courses) => {
-  console.log((err) ? "ERROR" : courses);
-});
+/*moodle.getCourses(eva, (err, courses) => {
+  console.log((err) ? err : courses);
+});*/
 
-moddle.getTasks(eva, (user, tasks) => {
-
+moodle.getTasks(eva, (error, tasks) => {
+  console.log((error) ? error : tasks);
 });
