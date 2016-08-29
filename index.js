@@ -1,4 +1,3 @@
-//jshint esversion: 6
 const moodle = require('./moodle');
 
 const eva = {
@@ -9,9 +8,9 @@ const eva = {
 
 };
 
-/*moodle.getCourses(eva, (err, courses) => {
-  console.log((err) ? err : courses);
-});*/
+moodle.getCourses(eva, (error, courses) => {
+  console.log((error) ? error : courses);
+});
 
 moodle.getTasks(eva, (error, tasks) => {
   console.log((error) ? error : tasks);

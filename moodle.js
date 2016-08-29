@@ -1,64 +1,68 @@
-//jshint esversion: 6
 const cheerio = require('cheerio');
+const request = require('request').defaults({
+  jar: true
+});
 
-let request = require('request');
+function authenticate(user) {
 
-request = request.defaults({jar: true});
+  const MOODLE_PARAMETERS = {
+    url: `${user.url}/moodle/login/index.php `,
+    form: {
+      username: user.username,
+      password: user.password
+    }
+  };
+  return new Promise((resolve, reject) =>
+    request.post(MOODLE_PARAMETERS, (error, response, body) => (error) ? reject(new Error(error)) :
+      resolve(body)));
+}
+
 
 function getCourses(user, callback) {
-  request.post({url: `${user.url}/moodle/login/index.php `,
-                              form: {username: user.username,password: user.password}},
-                              (err, httpResponse, body) => {
-    if (err) throw err;
 
-    request(`${user.url}/moodle/`, function (error, response, body) {
-      if (!error && response.statusCode == 200) {
+  authenticate(user).then((data) => {
+    request(`${user.url}/moodle/`, function(error, response, body) {
+      let $ = cheerio.load(body);
+      let courses = [];
 
-        let $ = cheerio.load(body);
-        let courses = [];
-          console.log(body);
-        $('div.coursebox > .info > .coursename')
-          .each(function() {
-            courses.push( $(this).text());
+      $('div.coursebox > .info > .coursename')
+        .each(function() {
+          courses.push({
+            courseName: $(this).text()
           });
+        });
 
-        process.nextTick(() =>{
-           callback(null, courses);
-        });
-      } else {
-        process.nextTick(() => {
-           callback(new Error(error), null);
-        });
-        return;
-      }
+      process.nextTick(() => {
+        callback(null, courses);
+      });
     });
+
   });
 }
 
 function getTasks(user, callback) {
-  request.post({url: `${user.url}/moodle/login/index.php `,
-                form:{ username: user.username,password: user.password}},
-                              (err, httpResponse, body) => {
-    if (err) throw err;
 
-    request(`${user.url}/moodle/calendar/view.php?view=month&time=${Math.floor(Date.now() / 1000)}`, function (error, response, body) {
+  authenticate(user).then((data) => {
+
+    request(`${user.url}/moodle/calendar/view.php?view=month&time=${Math.floor(Date.now() / 1000)}`, function(error, response, body) {
       if (!error && response.statusCode == 200) {
 
-        let $ = cheerio.load(body);
-        let courses = [];
+        const $ = cheerio.load(body);
+        const name = $('a[title="Ver perfil"]').first().text();
+        const tasks = [];
+
+
         $('li.calendar_event_course')
           .each(function() {
-            courses.push($(this).text());
+            tasks.push($(this).text());
           });
 
-        process.nextTick(() =>{
-           callback(null, courses);
-        });
-      } else {
         process.nextTick(() => {
-           callback(new Error(error), null);
+          callback(null, {
+            name,
+            tasks
+          });
         });
-        return;
       }
     });
   });
@@ -66,6 +70,6 @@ function getTasks(user, callback) {
 
 module.exports = {
   getCourses: getCourses,
-  getTasks : getTasks
+  getTasks: getTasks
 
 };
