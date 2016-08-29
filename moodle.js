@@ -14,7 +14,7 @@ function authenticate(user) {
   };
   return new Promise((resolve, reject) =>
     request.post(MOODLE_PARAMETERS, (error, response, body) => (error) ? reject(new Error(error)) :
-      resolve(body)));
+      resolve(response)));
 }
 
 
@@ -44,24 +44,28 @@ function getTasks(user, callback) {
 
   authenticate(user).then((data) => {
 
-    request(`${user.url}/moodle/calendar/view.php?view=month&time=${Math.floor(Date.now() / 1000)}`, function(error, response, body) {
+    request(`${user.url}/moodle/calendar/view.php?view=day&time=1468555200`, (error, response, body) => {
       if (!error && response.statusCode == 200) {
 
         const $ = cheerio.load(body);
         const name = $('a[title="Ver perfil"]').first().text();
-        const tasks = [];
+        const tasks =  $('li.calendar_event_course').text();
+        const events  = [];
 
 
-        $('li.calendar_event_course')
-          .each(function() {
-            tasks.push($(this).text());
+        $('.event').map(function (index, element) {
+
+          events.push({
+              user: name,
+              course_title: $('.course').text(),
+              taskTitle: $('.referer').text(),
+              description: $('.description').text()
           });
+
+        });
 
         process.nextTick(() => {
-          callback(null, {
-            name,
-            tasks
-          });
+          callback(null, events);
         });
       }
     });

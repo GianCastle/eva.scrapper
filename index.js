@@ -1,4 +1,8 @@
 const moodle = require('./moodle');
+const express = require('express');
+const app = express();
+
+
 
 const eva = {
   username: process.env.EVA_USER,
@@ -8,10 +12,20 @@ const eva = {
 
 };
 
-moodle.getCourses(eva, (error, courses) => {
-  console.log((error) ? error : courses);
+app.get('/', (req, res, next) => {
+  moodle.getTasks(eva, (error, tasks) => {
+    if(error) throw new Error(error);
+    res.json(tasks);
+  });
 });
 
-moodle.getTasks(eva, (error, tasks) => {
-  console.log((error) ? error : tasks);
+app.get('/courses', (req, res, next) => {
+  moodle.getCourses(eva, (error, courses) => {
+    if(error) throw new Error(error);
+    res.json(courses);
+  });
+});
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log('Server is running');
 });
