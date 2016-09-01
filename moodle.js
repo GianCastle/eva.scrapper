@@ -4,7 +4,6 @@ const request = require('request').defaults({
 });
 
 function authenticate(user) {
-
   const MOODLE_PARAMETERS = {
     url: `${user.url}/moodle/login/index.php `,
     form: {
@@ -19,11 +18,10 @@ function authenticate(user) {
 
 
 function getCourses(user, callback) {
-
   authenticate(user).then((data) => {
     request(`${user.url}/moodle/`, function(error, response, body) {
-      let $ = cheerio.load(body);
-      let courses = [];
+      const $ = cheerio.load(body);
+      const courses = [];
 
       $('div.coursebox > .info > .coursename')
         .each(function() {
@@ -41,22 +39,15 @@ function getCourses(user, callback) {
 }
 
 function getTasks(user, callback) {
-
   authenticate(user).then((data) => {
-
-    request(`${user.url}/moodle/calendar/view.php?view=day&time=1468555200`, (error, response, body) => {
+    request(`${user.url}/moodle/calendar/view.php?view=month&time=${Math.floor(new Date() / 1000)}`, (error, response, body) => {
       if (!error && response.statusCode == 200) {
-
         const $ = cheerio.load(body);
-        const name = $('a[title="Ver perfil"]').first().text();
-        const tasks =  $('li.calendar_event_course').text();
         const events  = [];
 
-
         $('.event').map(function (index, element) {
-
           events.push({
-              user: name,
+              user: $('a[title="Ver perfil"]').first().text(),
               course_title: $('.course').text(),
               taskTitle: $('.referer').text(),
               description: $('.description').text()
@@ -65,15 +56,45 @@ function getTasks(user, callback) {
         });
 
         process.nextTick(() => {
-          callback(null, events);
+          if(events.length > 0) {
+              callback(null, events);
+          } else {
+            callback(null, {error : 'No today tasks'});
+          }
+
+
         });
       }
     });
   });
 }
 
+function getParticipants(user, callback) {
+    authenticate(user).then((data) => {
+      request(`${user.url}/moodle/user/index.php?contextid=5064048&roleid=0&id=232289&search&perpage=60&mode=1`, (error, response, body) => {
+        if(response.statusCode == 200) {
+          const $ = cheerio.load(body);
+          const list = [];
+
+          $('.username').each(function(index, element) {
+            list.push($(this).text());
+          });
+
+          process.nextTick(() => {
+            callback(null,{
+              course: $('span[itemprop="title"]').first().text(),
+              participants: list
+            } );
+          });
+
+        }
+    });
+  });
+}
+
 module.exports = {
   getCourses: getCourses,
-  getTasks: getTasks
+  getTasks: getTasks,
+  getParticipants : getParticipants
 
 };
